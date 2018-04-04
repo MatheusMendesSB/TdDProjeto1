@@ -1,2 +1,2 @@
 # TdDProjeto1
-Repositórui
+Repositório para o primeiro projeto da disciplina Tratamento de Dados. 
