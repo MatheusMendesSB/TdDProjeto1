@@ -4,8 +4,8 @@ from numba import jit #isso e usado em funcoes e vai fazer o codigo rodar mais r
 from astropy.io import fits
 
 
-datapath = input('Qual e o caminho da localizacao das imagens?\n') #Este codigo comeca pedindo a localizacao das imagens
-sci = input('Digite o nome que aparece em suas imagens de ciencia:\n') 
+datapath = input('Qual e o caminho da localizacao das imagens?\n') #Este codigo comeca pedindo a localizacao das imagens.
+sci = input('Digite o nome que aparece em suas imagens de ciencia:\n') #O usuario tambem precisa especificar o nome usado para identificar suas imagens de ciencia.
 
 
 @jit

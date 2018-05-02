@@ -1,5 +1,0 @@
-1- git clone
-2- git status
-3- git add --all
-4- git commit -m "nota/comentário"
-5- git push -u origin master

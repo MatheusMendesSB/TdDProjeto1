@@ -36,8 +36,10 @@ def masterFlat(flat_bias):
     mediaflat = np.mean(flat_bias,axis=0) #criando uma matriz com a média entre os flat.
     for i in flat_bias:
        j = i/mediaflat #normalizando os flat corrigidos.
-       masterflat = np.median(flat_bias,axis=0) #Criando o master flat.
-       return masterflat
+    masterflat = np.median(flat_bias,axis=0) #Criando o master flat.
+    return masterflat
+
+#Otimizar essa funcao de baixo, mesclar os dois for em um unico for (memory error).
 
 @jit
 def sciBias(lista_sci, masterbias):
@@ -51,7 +53,7 @@ def sciBias(lista_sci, masterbias):
     for i in nlista_sci:
        j = i - masterbias #corrigindo as imagens de ciencia do bias.
        sci_bias.append(j) #introduzindo as imagens de ciencia corrigidas na lista vazia.
-       return sci_bias
+    return sci_bias
 
 @jit
 def sciFlat(sci_bias, masterflat):
@@ -60,13 +62,17 @@ def sciFlat(sci_bias, masterflat):
     for i in sci_bias:
        j = i/masterflat #corrigindo as imagens de ciencia do flat.
        sci_flat.append(j) #introduzindo as imagens de ciencia corrigidas na lista vazia.
-       return sci_flat    
-       
+    return sci_flat
+    
+     
 
 lista_bias = glob.glob(datapath+'bias*.fits') #criando uma lista contendo todas as imagens bias.
 lista_flat = glob.glob(datapath+'flat*.fits') #criando uma lista contendo todas as imagens flat.
 lista_sci = glob.glob(datapath+'xo2b*.fits') #criando uma lista contendo todas as imagens de ciência.
 
+
+
+#Rodando as funcoes do codigo e printando a lista de matrizes das imagens de ciencia corrigidas de bias e de flat:
 
 masterbias = masterBias(lista_bias)
 flat_bias = corrFlat(lista_flat, masterbias)
@@ -74,3 +80,27 @@ masterflat = masterFlat(flat_bias)
 sci_bias = sciBias(lista_sci, masterbias)
 sci_flat = sciFlat(sci_bias, masterflat)
 print(sci_flat)
+
+
+#Salvando o output do codigo em um arquivo .fits:
+
+outfile = 'pipeline.fits' #nome do arquivo que sera criado.
+
+
+for i in range(len(sci_flat)):
+    hdu = fits.PrimaryHDU() #criando o HDU 
+    hdu.data = sci_flat[i] #adicionando a matriz numerica.
+    hdr = fits.getheader(lista_sci[i]) #lendo os headers das imagens de ciencia originais.
+    hdu.header = hdr #adicionando a tabela de informacoes.
+    hdu.header['BIAS_REDUCTION'] #acrescentando header BIAS_REDUCTION na tabela de informacoes.
+    hdu.header.comments['BIAS_REDUCTION'] = 'True'
+    hdu.header['FLAT_REDUCTION'] #acrescentando header FLAT_REDUCTION na tabela de informacoes.
+    hdu.header.comments['FLAT_REDUCTION'] = 'True'
+    hdu.writeto(str(i)+outfile) 
+
+
+
+
+
+
+
