@@ -80,33 +80,29 @@ if 0 < a.all() < 30: #A média do Master Bias deve estar dentro desse intervalo 
 else:
  print ("Master Bias: nao passou no teste...")
 
-if 0 < b.all() < 2: #A média do Master Flat deve estar dentro desse intervalo para ser considerado um resultado aceitável. 
+if -5 < b.all() < 5: #A média do Master Flat deve estar dentro desse intervalo para ser considerado um resultado aceitável. 
  print ("Master Flat: passou no teste!")
 else:
  print ("Master Flat: nao passou no teste...")
 
+print(a)
+
+print(b)
+
 
 #Salvando o output do codigo em um arquivo .fits:
 
-outfile = 'pipeline.fits' #nome do arquivo que sera criado.
+#outfile = 'pipeline.fits' #nome do arquivo que sera criado.
 
-for i in range(len(sci_flatbias)):
-    hdu = fits.PrimaryHDU() #criando o HDU 
-    hdu.data = sci_flatbias[i] #adicionando a matriz numerica.
-    hdr = fits.getheader(lista_sci[i]) #lendo os headers das imagens de ciencia originais.
-    hdu.header = hdr #adicionando a tabela de informacoes.
-    hdu.header['BIAS_RED'] = 'True' #acrescentando header BIAS_REDUCTION na tabela de informacoes.
-    hdu.header.comments['BIAS_RED'] = 'Reducao Bias'
-    hdu.header['FLAT_RED'] = 'True' #acrescentando header FLAT_REDUCTION na tabela de informacoes.
-    hdu.header.comments['FLAT_RED'] = 'Reducao Flat'
-    hdu.writeto(str(i)+outfile)
-
-
-
-
-
-
-
-
+#for i in range(len(sci_flatbias)):
+#    hdu = fits.PrimaryHDU() #criando o HDU 
+#    hdu.data = sci_flatbias[i] #adicionando a matriz numerica.
+#    hdr = fits.getheader(lista_sci[i]) #lendo os headers das imagens de ciencia originais.
+#    hdu.header = hdr #adicionando a tabela de informacoes.
+#    hdu.header['BIAS_RED'] = 'True' #acrescentando header BIAS_REDUCTION na tabela de informacoes.
+#    hdu.header.comments['BIAS_RED'] = 'Reducao Bias'
+#    hdu.header['FLAT_RED'] = 'True' #acrescentando header FLAT_REDUCTION na tabela de informacoes.
+#    hdu.header.comments['FLAT_RED'] = 'Reducao Flat'
+#    hdu.writeto(str(i)+outfile)
 
 

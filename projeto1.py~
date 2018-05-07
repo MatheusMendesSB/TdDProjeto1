@@ -1,12 +1,10 @@
 import numpy as np
 import glob
-from numba import jit #isso e usado em funcoes e vai fazer o codigo rodar mais rapido.
+from numba import jit #isso e usado em funcoes e faz o codigo rodar mais rapido.
 from astropy.io import fits
-
 
 datapath = input('Qual e o caminho da localizacao das imagens?\n') #Este codigo comeca pedindo a localizacao das imagens.
 sci = input('Digite o nome que aparece em suas imagens de ciencia:\n') #O usuario tambem precisa especificar o nome usado para identificar suas imagens de ciencia.
-
 
 @jit
 def masterBias(lista_bias):
@@ -39,45 +37,68 @@ def masterFlat(flat_bias):
     mediaflat = np.mean(flat_bias,axis=0) #criando uma matriz com a média entre os flat.
     for i in flat_bias:
        j = i/mediaflat #normalizando os flat corrigidos.
-       masterflat = np.median(flat_bias,axis=0) #Criando o master flat.
-       return masterflat
+    masterflat = np.median(flat_bias,axis=0) #Criando o master flat.
+    return masterflat
 
 @jit
-def sciBias(lista_sci, masterbias):
-    '''Essa funcao corrige as imagens de ciencia do bias'''
-    sci_bias = [] #criando lista vazia para colocar as imagens de ciencia corrigidas do bias.
-    nlista_sci = [] #criando lista vazia para colocar as imagens de ciencia em caracteres numericos.
-    for i in lista_sci: 
+def corrSci(lista_sci, lista_bias, masterbias, masterflat):
+    '''Essa funcao corrige as imagens de ciencia'''
+    sci_flatbias = [] #criando lista vazia para colocar as imagens de ciencia corrigidas.
+    for i in lista_sci:
        img,hdr = fits.getdata(i, header = True) #abrindo as imagens de ciencia.
        img = img.astype(np.float64) #transformando os elementos "string" em elementos numericos.
-       nlista_sci.append(img) #introduzindo as imagens de ciencia em caracteres numericos na lista vazia.
-    for i in nlista_sci:
-       j = i - masterbias #corrigindo as imagens de ciencia do bias.
-       sci_bias.append(j) #introduzindo as imagens de ciencia corrigidas na lista vazia.
-       return sci_bias
-
-@jit
-def sciFlat(sci_bias, masterflat):
-    sci_flat = [] #criando lista vazia para colocar as imagens de ciencia corrigidas do flat.
-    '''Essa funcao corrige as imagens de ciencia do flat'''
-    for i in sci_bias:
-       j = i/masterflat #corrigindo as imagens de ciencia do flat.
-       sci_flat.append(j) #introduzindo as imagens de ciencia corrigidas na lista vazia.
-       return sci_flat    
-       
+       j = (img - masterbias)/masterflat #corrigindo as imagens de ciencia.
+       sci_flatbias.append(j) #introduzindo as imagens de ciencia na lista vazia.
+    return sci_flatbias
+ 
+      
+#Criando as listas com os dados:
 
 lista_bias = glob.glob(datapath+'bias*.fits') #criando uma lista contendo todas as imagens bias.
 lista_flat = glob.glob(datapath+'flat*.fits') #criando uma lista contendo todas as imagens flat.
 lista_sci = glob.glob(datapath+sci+'*.fits') #criando uma lista contendo todas as imagens de ciência.
 
 
+#Rodando as funcoes do codigo e printando a lista de matrizes das imagens de ciencia corrigidas de bias e de flat:
+
 masterbias = masterBias(lista_bias)
 flat_bias = corrFlat(lista_flat, masterbias)
 masterflat = masterFlat(flat_bias)
-sci_bias = sciBias(lista_sci, masterbias)
-sci_flat = sciFlat(sci_bias, masterflat)
-print(sci_flat)
+sci_flatbias = corrSci(lista_sci, lista_bias, masterbias, masterflat)
+#print(sci_flatbias)
 
+
+#Testes estatisticos para o Master Bias e Master Flat:
+
+a = np.mean(masterbias, axis=0) #Tirando a média do Master Bias.
+
+b = np.mean(masterflat, axis=0) #Tirando a média do Master Flat.
+
+if 0 < a.all() < 30: #A média do Master Bias deve estar dentro desse intervalo para ser considerado um resultado aceitável. 
+ print("Master Bias: passou no teste!")
+else:
+ print ("Master Bias: nao passou no teste...")
+
+if 0 < b.all() < 2: #A média do Master Flat deve estar dentro desse intervalo para ser considerado um resultado aceitável. 
+ print ("Master Flat: passou no teste!")
+else:
+ print ("Master Flat: nao passou no teste...")
+
+
+#Salvando o output do codigo em um arquivo .fits:
+
+outfile = 'pipeline.fits' #nome do arquivo que sera criado.
+
+for i in range(len(sci_flatbias)):
+    hdu = fits.PrimaryHDU() #criando o HDU 
+    hdu.data = sci_flatbias[i] #adicionando a matriz numerica.
+    hdr = fits.getheader(lista_sci[i]) #lendo os headers das imagens de ciencia originais.
+    hdu.header = hdr #adicionando a tabela de informacoes.
+    hdu.header['BIAS_RED'] = 'True' #acrescentando header BIAS_REDUCTION na tabela de informacoes.
+    hdu.header.comments['BIAS_RED'] = 'Reducao Bias'
+    hdu.header['FLAT_RED'] = 'True' #acrescentando header FLAT_REDUCTION na tabela de informacoes.
+    hdu.header.comments['FLAT_RED'] = 'Reducao Flat'
+    hdu.writeto(str(i)+outfile)
 
 
 
